@@ -12,30 +12,11 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.text.*;
 
-/**
- * GuiOrganizer — A full-featured Swing GUI for the Smart Directory Organizer.
- *
- * Why Swing?
- *   Swing is chosen for its absolute stability and guaranteed compatibility
- *   across all operating systems without requiring any user setup.
- *
- * Zero Dependencies:
- *   This entire application requires nothing but a standard JDK to compile
- *   and run.  No Maven, no Gradle, no external libraries.
- *
- * Usage:
- *   javac GuiOrganizer.java
- *   java  GuiOrganizer
- */
 public class GuiOrganizer extends JFrame {
 
-    // ──────────────────────────────────────────────
-    //  Extension → Category mapping
-    // ──────────────────────────────────────────────
     private static final Map<String, String> EXTENSION_MAP = new HashMap<>();
 
     static {
-        // Documents
         EXTENSION_MAP.put("pdf",  "Documents");
         EXTENSION_MAP.put("doc",  "Documents");
         EXTENSION_MAP.put("docx", "Documents");
@@ -48,7 +29,6 @@ public class GuiOrganizer extends JFrame {
         EXTENSION_MAP.put("pptx", "Documents");
         EXTENSION_MAP.put("csv",  "Documents");
 
-        // Images
         EXTENSION_MAP.put("jpg",  "Images");
         EXTENSION_MAP.put("jpeg", "Images");
         EXTENSION_MAP.put("png",  "Images");
@@ -59,7 +39,6 @@ public class GuiOrganizer extends JFrame {
         EXTENSION_MAP.put("ico",  "Images");
         EXTENSION_MAP.put("tiff", "Images");
 
-        // Videos
         EXTENSION_MAP.put("mp4",  "Videos");
         EXTENSION_MAP.put("mkv",  "Videos");
         EXTENSION_MAP.put("avi",  "Videos");
@@ -68,7 +47,6 @@ public class GuiOrganizer extends JFrame {
         EXTENSION_MAP.put("flv",  "Videos");
         EXTENSION_MAP.put("webm", "Videos");
 
-        // Audio
         EXTENSION_MAP.put("mp3",  "Audio");
         EXTENSION_MAP.put("wav",  "Audio");
         EXTENSION_MAP.put("flac", "Audio");
@@ -76,7 +54,6 @@ public class GuiOrganizer extends JFrame {
         EXTENSION_MAP.put("ogg",  "Audio");
         EXTENSION_MAP.put("wma",  "Audio");
 
-        // Archives
         EXTENSION_MAP.put("zip",  "Archives");
         EXTENSION_MAP.put("rar",  "Archives");
         EXTENSION_MAP.put("7z",   "Archives");
@@ -84,7 +61,6 @@ public class GuiOrganizer extends JFrame {
         EXTENSION_MAP.put("gz",   "Archives");
         EXTENSION_MAP.put("bz2",  "Archives");
 
-        // Code / Scripts
         EXTENSION_MAP.put("java", "Code");
         EXTENSION_MAP.put("py",   "Code");
         EXTENSION_MAP.put("js",   "Code");
@@ -100,7 +76,6 @@ public class GuiOrganizer extends JFrame {
         EXTENSION_MAP.put("sql",  "Code");
         EXTENSION_MAP.put("sh",   "Code");
 
-        // Executables / Installers
         EXTENSION_MAP.put("exe",  "Executables");
         EXTENSION_MAP.put("msi",  "Executables");
         EXTENSION_MAP.put("dmg",  "Executables");
@@ -110,25 +85,19 @@ public class GuiOrganizer extends JFrame {
         EXTENSION_MAP.put("jar",  "Executables");
     }
 
-    // ──────────────────────────────────────────────
-    //  Theme colors
-    // ──────────────────────────────────────────────
-    private static final Color COLOR_PRIMARY    = new Color(59, 130, 246);   // Blue-500
-    private static final Color COLOR_PRIMARY_HV = new Color(37, 99, 235);   // Blue-600
-    private static final Color COLOR_BG_DARK    = new Color(30, 32, 40);    // Dark slate
-    private static final Color COLOR_BG_PANEL   = new Color(39, 42, 55);    // Panel bg
-    private static final Color COLOR_BG_INPUT   = new Color(49, 53, 68);    // Input bg
-    private static final Color COLOR_TEXT       = new Color(226, 232, 240);  // Slate-200
-    private static final Color COLOR_TEXT_DIM   = new Color(148, 163, 184);  // Slate-400
-    private static final Color COLOR_SUCCESS    = new Color(34, 197, 94);    // Green-500
-    private static final Color COLOR_WARNING    = new Color(250, 204, 21);   // Yellow-400
-    private static final Color COLOR_ERROR      = new Color(239, 68, 68);    // Red-500
-    private static final Color COLOR_INFO       = new Color(96, 165, 250);   // Blue-400
-    private static final Color COLOR_BORDER     = new Color(55, 65, 81);     // Gray-700
+    private static final Color COLOR_PRIMARY    = new Color(59, 130, 246);
+    private static final Color COLOR_PRIMARY_HV = new Color(37, 99, 235);
+    private static final Color COLOR_BG_DARK    = new Color(30, 32, 40);
+    private static final Color COLOR_BG_PANEL   = new Color(39, 42, 55);
+    private static final Color COLOR_BG_INPUT   = new Color(49, 53, 68);
+    private static final Color COLOR_TEXT       = new Color(226, 232, 240);
+    private static final Color COLOR_TEXT_DIM   = new Color(148, 163, 184);
+    private static final Color COLOR_SUCCESS    = new Color(34, 197, 94);
+    private static final Color COLOR_WARNING    = new Color(250, 204, 21);
+    private static final Color COLOR_ERROR      = new Color(239, 68, 68);
+    private static final Color COLOR_INFO       = new Color(96, 165, 250);
+    private static final Color COLOR_BORDER     = new Color(55, 65, 81);
 
-    // ──────────────────────────────────────────────
-    //  GUI components
-    // ──────────────────────────────────────────────
     private JTextField pathField;
     private JTextPane  logPane;
     private StyledDocument logDocument;
@@ -139,14 +108,9 @@ public class GuiOrganizer extends JFrame {
     private JProgressBar progressBar;
     private Path       selectedDirectory;
 
-    // Undo history: each entry is [originalPath, movedToPath]
     private final List<Path[]> moveHistory = new ArrayList<>();
-    // Category folders created during the last organize
     private final Set<Path> createdFolders = new LinkedHashSet<>();
 
-    // ──────────────────────────────────────────────
-    //  Constructor — build the UI
-    // ──────────────────────────────────────────────
     public GuiOrganizer() {
         super("Smart Directory Organizer");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -154,20 +118,16 @@ public class GuiOrganizer extends JFrame {
         setMinimumSize(new Dimension(600, 480));
         setLocationRelativeTo(null);
 
-        // Main content pane
         JPanel root = new JPanel(new BorderLayout(0, 0));
         root.setBackground(COLOR_BG_DARK);
         setContentPane(root);
 
-        root.add(createHeaderPanel(),  BorderLayout.NORTH);
-        root.add(createCenterPanel(),  BorderLayout.CENTER);
-        root.add(createFooterPanel(),  BorderLayout.SOUTH);
+        root.add(spawnTop(),  BorderLayout.NORTH);
+        root.add(spawnMid(),  BorderLayout.CENTER);
+        root.add(spawnBot(),  BorderLayout.SOUTH);
     }
 
-    // ──────────────────────────────────────────────
-    //  Header — title and description
-    // ──────────────────────────────────────────────
-    private JPanel createHeaderPanel() {
+    private JPanel spawnTop() {
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBackground(COLOR_BG_PANEL);
@@ -193,27 +153,20 @@ public class GuiOrganizer extends JFrame {
         return header;
     }
 
-    // ──────────────────────────────────────────────
-    //  Center — folder selector + log area
-    // ──────────────────────────────────────────────
-    private JPanel createCenterPanel() {
+    private JPanel spawnMid() {
         JPanel center = new JPanel(new BorderLayout(0, 12));
         center.setBackground(COLOR_BG_DARK);
         center.setBorder(new EmptyBorder(16, 24, 8, 24));
 
-        center.add(createSelectorPanel(), BorderLayout.NORTH);
-        center.add(createLogPanel(),      BorderLayout.CENTER);
+        center.add(makePickerBar(), BorderLayout.NORTH);
+        center.add(makeLogBox(),    BorderLayout.CENTER);
         return center;
     }
 
-    /**
-     * Folder selector row: [path field] [Select] [Organize] [Undo]
-     */
-    private JPanel createSelectorPanel() {
+    private JPanel makePickerBar() {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setBackground(COLOR_BG_DARK);
 
-        // Path field (read-only)
         pathField = new JTextField("No folder selected");
         pathField.setEditable(false);
         pathField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -225,17 +178,16 @@ public class GuiOrganizer extends JFrame {
                 new EmptyBorder(10, 14, 10, 14)
         ));
 
-        // Buttons
-        selectButton = createStyledButton("\uD83D\uDCC2  Select Folder", COLOR_PRIMARY, COLOR_PRIMARY_HV);
-        selectButton.addActionListener(e -> onSelectFolder());
+        selectButton = makeBtn("\uD83D\uDCC2  Select Folder", COLOR_PRIMARY, COLOR_PRIMARY_HV);
+        selectButton.addActionListener(e -> grabFolder());
 
-        organizeButton = createStyledButton("\u26A1  Organize Now", new Color(22, 163, 74), new Color(21, 128, 61));
+        organizeButton = makeBtn("\u26A1  Organize Now", new Color(22, 163, 74), new Color(21, 128, 61));
         organizeButton.setEnabled(false);
-        organizeButton.addActionListener(e -> onOrganize());
+        organizeButton.addActionListener(e -> smashDo());
 
-        undoButton = createStyledButton("\u21A9  Undo", new Color(220, 120, 30), new Color(190, 100, 20));
+        undoButton = makeBtn("\u21A9  Undo", new Color(220, 120, 30), new Color(190, 100, 20));
         undoButton.setEnabled(false);
-        undoButton.addActionListener(e -> onUndo());
+        undoButton.addActionListener(e -> rollbackUnDo());
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         btnPanel.setOpaque(false);
@@ -248,10 +200,7 @@ public class GuiOrganizer extends JFrame {
         return panel;
     }
 
-    /**
-     * Log output area with styled text.
-     */
-    private JPanel createLogPanel() {
+    private JPanel makeLogBox() {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBackground(COLOR_BG_DARK);
 
@@ -266,17 +215,16 @@ public class GuiOrganizer extends JFrame {
         logPane.setFont(new Font("Consolas", Font.PLAIN, 12));
         logPane.setBackground(new Color(22, 24, 30));
         logPane.setForeground(COLOR_TEXT);
-        logPane.setCaretColor(new Color(22, 24, 30)); // hide caret
+        logPane.setCaretColor(new Color(22, 24, 30));
         logPane.setBorder(new EmptyBorder(12, 14, 12, 14));
         logDocument = logPane.getStyledDocument();
 
-        // Pre-define text styles
-        addStyle("default", COLOR_TEXT);
-        addStyle("info",    COLOR_INFO);
-        addStyle("success", COLOR_SUCCESS);
-        addStyle("warning", COLOR_WARNING);
-        addStyle("error",   COLOR_ERROR);
-        addStyle("header",  COLOR_PRIMARY, true);
+        paintTag("default", COLOR_TEXT);
+        paintTag("info",    COLOR_INFO);
+        paintTag("success", COLOR_SUCCESS);
+        paintTag("warning", COLOR_WARNING);
+        paintTag("error",   COLOR_ERROR);
+        paintTag("header",  COLOR_PRIMARY, true);
 
         JScrollPane scroll = new JScrollPane(logPane);
         scroll.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1, true));
@@ -287,10 +235,7 @@ public class GuiOrganizer extends JFrame {
         return wrapper;
     }
 
-    // ──────────────────────────────────────────────
-    //  Footer — status bar + progress
-    // ──────────────────────────────────────────────
-    private JPanel createFooterPanel() {
+    private JPanel spawnBot() {
         JPanel footer = new JPanel(new BorderLayout(12, 0));
         footer.setBackground(COLOR_BG_PANEL);
         footer.setBorder(BorderFactory.createCompoundBorder(
@@ -319,11 +264,8 @@ public class GuiOrganizer extends JFrame {
         return footer;
     }
 
-    // ──────────────────────────────────────────────
-    //  Button factory with hover effect
-    // ──────────────────────────────────────────────
-    private JButton createStyledButton(String text, Color bg, Color bgHover) {
-        JButton btn = new JButton(text) {
+    private JButton makeBtn(String txt, Color c1, Color c2) {
+        JButton btn = new JButton(txt) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -337,7 +279,7 @@ public class GuiOrganizer extends JFrame {
         };
         btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btn.setForeground(Color.WHITE);
-        btn.setBackground(bg);
+        btn.setBackground(c1);
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setContentAreaFilled(false);
@@ -348,47 +290,40 @@ public class GuiOrganizer extends JFrame {
         btn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                if (btn.isEnabled()) btn.setBackground(bgHover);
+                if (btn.isEnabled()) btn.setBackground(c2);
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(bg);
+                btn.setBackground(c1);
             }
         });
         return btn;
     }
 
-    // ──────────────────────────────────────────────
-    //  Style helpers for the log pane
-    // ──────────────────────────────────────────────
-    private void addStyle(String name, Color color) {
-        addStyle(name, color, false);
+    private void paintTag(String key, Color col) {
+        paintTag(key, col, false);
     }
 
-    private void addStyle(String name, Color color, boolean bold) {
-        Style style = logPane.addStyle(name, null);
-        StyleConstants.setForeground(style, color);
+    private void paintTag(String key, Color col, boolean fat) {
+        Style style = logPane.addStyle(key, null);
+        StyleConstants.setForeground(style, col);
         StyleConstants.setFontFamily(style, "Consolas");
         StyleConstants.setFontSize(style, 12);
-        if (bold) StyleConstants.setBold(style, true);
+        if (fat) StyleConstants.setBold(style, true);
     }
 
-    private void log(String message, String styleName) {
+    private void printLog(String msg, String tag) {
         SwingUtilities.invokeLater(() -> {
             try {
-                Style style = logPane.getStyle(styleName);
-                logDocument.insertString(logDocument.getLength(), message + "\n", style);
+                Style style = logPane.getStyle(tag);
+                logDocument.insertString(logDocument.getLength(), msg + "\n", style);
                 logPane.setCaretPosition(logDocument.getLength());
             } catch (BadLocationException ignored) {
-                // Swallow — should never happen
             }
         });
     }
 
-    // ──────────────────────────────────────────────
-    //  Action: Select Folder
-    // ──────────────────────────────────────────────
-    private void onSelectFolder() {
+    private void grabFolder() {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Select a Folder to Organize");
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -402,17 +337,13 @@ public class GuiOrganizer extends JFrame {
             pathField.setForeground(COLOR_TEXT);
             organizeButton.setEnabled(true);
             statusLabel.setText("Folder selected — ready to organize");
-            log("Selected folder: " + selectedDirectory, "info");
+            printLog("Selected folder: " + selectedDirectory, "info");
         }
     }
 
-    // ──────────────────────────────────────────────
-    //  Action: Organize
-    // ──────────────────────────────────────────────
-    private void onOrganize() {
+    private void smashDo() {
         if (selectedDirectory == null) return;
 
-        // Disable buttons during operation
         selectButton.setEnabled(false);
         organizeButton.setEnabled(false);
         undoButton.setEnabled(false);
@@ -420,14 +351,12 @@ public class GuiOrganizer extends JFrame {
         progressBar.setVisible(true);
         statusLabel.setText("Organizing...");
 
-        // Clear previous history and logs
         moveHistory.clear();
         createdFolders.clear();
         try {
             logDocument.remove(0, logDocument.getLength());
         } catch (BadLocationException ignored) { }
 
-        // Run the heavy work on a background thread to keep the UI responsive
         SwingWorker<Void, String[]> worker = new SwingWorker<>() {
 
             private int movedCount   = 0;
@@ -443,11 +372,10 @@ public class GuiOrganizer extends JFrame {
                              Files.newDirectoryStream(selectedDirectory)) {
 
                     for (Path entry : stream) {
-                        // Skip sub-directories
                         if (Files.isDirectory(entry)) continue;
 
                         String fileName  = entry.getFileName().toString();
-                        String extension = extractExtension(fileName);
+                        String extension = ripTail(fileName);
 
                         if (extension.isEmpty()) {
                             publish(new String[]{
@@ -466,7 +394,6 @@ public class GuiOrganizer extends JFrame {
                             continue;
                         }
 
-                        // Create category folder if needed
                         Path categoryDir = selectedDirectory.resolve(category);
                         if (!Files.exists(categoryDir)) {
                             Files.createDirectories(categoryDir);
@@ -475,7 +402,6 @@ public class GuiOrganizer extends JFrame {
                                     "info"});
                         }
 
-                        // Move file and record for undo
                         Path destination = categoryDir.resolve(fileName);
                         moveHistory.add(new Path[]{entry, destination});
                         createdFolders.add(categoryDir);
@@ -487,7 +413,6 @@ public class GuiOrganizer extends JFrame {
                                 "success"});
                         movedCount++;
 
-                        // Tiny pause so the UI visually shows progress
                         Thread.sleep(40);
                     }
 
@@ -510,17 +435,17 @@ public class GuiOrganizer extends JFrame {
             @Override
             protected void process(java.util.List<String[]> chunks) {
                 for (String[] entry : chunks) {
-                    log(entry[0], entry[1]);
+                    printLog(entry[0], entry[1]);
                 }
             }
 
             @Override
             protected void done() {
-                log("", "default");
-                log("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
-                log("  Done!  Moved: " + movedCount
+                printLog("", "default");
+                printLog("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
+                printLog("  Done!  Moved: " + movedCount
                         + "  |  Skipped: " + skippedCount, "success");
-                log("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
+                printLog("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
 
                 statusLabel.setText("Complete — " + movedCount + " files organized");
                 progressBar.setIndeterminate(false);
@@ -534,10 +459,7 @@ public class GuiOrganizer extends JFrame {
         worker.execute();
     }
 
-    // ──────────────────────────────────────────────
-    //  Action: Undo last organize
-    // ──────────────────────────────────────────────
-    private void onUndo() {
+    private void rollbackUnDo() {
         if (moveHistory.isEmpty()) return;
 
         selectButton.setEnabled(false);
@@ -551,7 +473,6 @@ public class GuiOrganizer extends JFrame {
             logDocument.remove(0, logDocument.getLength());
         } catch (BadLocationException ignored) { }
 
-        // Snapshot the history before the worker clears it
         List<Path[]> historySnapshot = new ArrayList<>(moveHistory);
         Set<Path> foldersSnapshot = new LinkedHashSet<>(createdFolders);
 
@@ -565,7 +486,6 @@ public class GuiOrganizer extends JFrame {
                 publish(new String[]{"\u2502   Undoing last organize operation", "header"});
                 publish(new String[]{"\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518", "header"});
 
-                // Move files back in reverse order
                 for (int i = historySnapshot.size() - 1; i >= 0; i--) {
                     Path[] record = historySnapshot.get(i);
                     Path originalPath = record[0];
@@ -590,10 +510,9 @@ public class GuiOrganizer extends JFrame {
                     }
                 }
 
-                // Remove empty category folders that we created
                 for (Path folder : foldersSnapshot) {
                     try {
-                        if (Files.exists(folder) && isDirectoryEmpty(folder)) {
+                        if (Files.exists(folder) && isHollowDir(folder)) {
                             Files.delete(folder);
                             publish(new String[]{
                                     "  [DEL]   Removed empty folder: "
@@ -613,17 +532,17 @@ public class GuiOrganizer extends JFrame {
             @Override
             protected void process(java.util.List<String[]> chunks) {
                 for (String[] entry : chunks) {
-                    log(entry[0], entry[1]);
+                    printLog(entry[0], entry[1]);
                 }
             }
 
             @Override
             protected void done() {
-                log("", "default");
-                log("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
-                log("  Undo complete!  Restored: " + restoredCount
+                printLog("", "default");
+                printLog("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
+                printLog("  Undo complete!  Restored: " + restoredCount
                         + "  |  Errors: " + errorCount, "success");
-                log("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
+                printLog("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
 
                 moveHistory.clear();
                 createdFolders.clear();
@@ -639,19 +558,13 @@ public class GuiOrganizer extends JFrame {
         worker.execute();
     }
 
-    // ──────────────────────────────────────────────
-    //  Utility: check if a directory is empty
-    // ──────────────────────────────────────────────
-    private static boolean isDirectoryEmpty(Path dir) throws IOException {
+    private static boolean isHollowDir(Path dir) throws IOException {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             return !stream.iterator().hasNext();
         }
     }
 
-    // ──────────────────────────────────────────────
-    //  Utility: extract file extension (without dot)
-    // ──────────────────────────────────────────────
-    private static String extractExtension(String fileName) {
+    private static String ripTail(String fileName) {
         int dotIndex = fileName.lastIndexOf('.');
         if (dotIndex <= 0 || dotIndex == fileName.length() - 1) {
             return "";
@@ -659,11 +572,7 @@ public class GuiOrganizer extends JFrame {
         return fileName.substring(dotIndex + 1);
     }
 
-    // ──────────────────────────────────────────────
-    //  Entry point
-    // ──────────────────────────────────────────────
     public static void main(String[] args) {
-        // Apply the system native Look and Feel
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) { }

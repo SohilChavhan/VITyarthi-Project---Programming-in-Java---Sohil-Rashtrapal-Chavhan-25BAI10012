@@ -3,24 +3,11 @@ import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * SmartOrganizer — Automatically categorizes messy files into organized
- * sub-folders based on their file extensions.
- *
- * Usage:
- *   javac SmartOrganizer.java
- *   java SmartOrganizer              (defaults to ./MessyFolder)
- *   java SmartOrganizer /path/to/dir (uses the supplied directory)
- */
 public class SmartOrganizer {
 
-    // ──────────────────────────────────────────────
-    //  Extension → Category mapping
-    // ──────────────────────────────────────────────
     private static final Map<String, String> EXTENSION_MAP = new HashMap<>();
 
     static {
-        // Documents
         EXTENSION_MAP.put("pdf",  "Documents");
         EXTENSION_MAP.put("doc",  "Documents");
         EXTENSION_MAP.put("docx", "Documents");
@@ -33,7 +20,6 @@ public class SmartOrganizer {
         EXTENSION_MAP.put("pptx", "Documents");
         EXTENSION_MAP.put("csv",  "Documents");
 
-        // Images
         EXTENSION_MAP.put("jpg",  "Images");
         EXTENSION_MAP.put("jpeg", "Images");
         EXTENSION_MAP.put("png",  "Images");
@@ -44,7 +30,6 @@ public class SmartOrganizer {
         EXTENSION_MAP.put("ico",  "Images");
         EXTENSION_MAP.put("tiff", "Images");
 
-        // Videos
         EXTENSION_MAP.put("mp4",  "Videos");
         EXTENSION_MAP.put("mkv",  "Videos");
         EXTENSION_MAP.put("avi",  "Videos");
@@ -53,7 +38,6 @@ public class SmartOrganizer {
         EXTENSION_MAP.put("flv",  "Videos");
         EXTENSION_MAP.put("webm", "Videos");
 
-        // Audio
         EXTENSION_MAP.put("mp3",  "Audio");
         EXTENSION_MAP.put("wav",  "Audio");
         EXTENSION_MAP.put("flac", "Audio");
@@ -61,7 +45,6 @@ public class SmartOrganizer {
         EXTENSION_MAP.put("ogg",  "Audio");
         EXTENSION_MAP.put("wma",  "Audio");
 
-        // Archives
         EXTENSION_MAP.put("zip",  "Archives");
         EXTENSION_MAP.put("rar",  "Archives");
         EXTENSION_MAP.put("7z",   "Archives");
@@ -69,7 +52,6 @@ public class SmartOrganizer {
         EXTENSION_MAP.put("gz",   "Archives");
         EXTENSION_MAP.put("bz2",  "Archives");
 
-        // Code / Scripts
         EXTENSION_MAP.put("java", "Code");
         EXTENSION_MAP.put("py",   "Code");
         EXTENSION_MAP.put("js",   "Code");
@@ -85,7 +67,6 @@ public class SmartOrganizer {
         EXTENSION_MAP.put("sql",  "Code");
         EXTENSION_MAP.put("sh",   "Code");
 
-        // Executables / Installers
         EXTENSION_MAP.put("exe",  "Executables");
         EXTENSION_MAP.put("msi",  "Executables");
         EXTENSION_MAP.put("dmg",  "Executables");
@@ -95,17 +76,9 @@ public class SmartOrganizer {
         EXTENSION_MAP.put("jar",  "Executables");
     }
 
-    // ──────────────────────────────────────────────
-    //  Default target directory
-    // ──────────────────────────────────────────────
     private static final String DEFAULT_DIRECTORY = "./MessyFolder";
 
-    // ──────────────────────────────────────────────
-    //  Entry point
-    // ──────────────────────────────────────────────
     public static void main(String[] args) {
-
-        // Allow an optional CLI argument to override the default path
         String dirArg = (args.length > 0) ? args[0] : DEFAULT_DIRECTORY;
         Path targetDir = Paths.get(dirArg).toAbsolutePath().normalize();
 
@@ -116,7 +89,6 @@ public class SmartOrganizer {
         System.out.println("  Target directory : " + targetDir);
         System.out.println();
 
-        // ── Validate that the target directory exists ──
         if (!Files.exists(targetDir)) {
             System.out.println("[ERROR] Directory does not exist: " + targetDir);
             System.out.println("        Create the directory and add some files, then re-run.");
@@ -127,21 +99,18 @@ public class SmartOrganizer {
             return;
         }
 
-        // ── Scan and organize ──
         int movedCount   = 0;
         int skippedCount = 0;
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(targetDir)) {
 
             for (Path entry : stream) {
-
-                // Skip directories — we only process regular files
                 if (Files.isDirectory(entry)) {
                     continue;
                 }
 
                 String fileName  = entry.getFileName().toString();
-                String extension = extractExtension(fileName);
+                String extension = ripTail(fileName);
 
                 if (extension.isEmpty()) {
                     System.out.println("  [SKIP]  " + fileName + "  (no extension)");
@@ -149,7 +118,6 @@ public class SmartOrganizer {
                     continue;
                 }
 
-                // Look up the category for this extension
                 String category = EXTENSION_MAP.get(extension.toLowerCase());
 
                 if (category == null) {
@@ -159,14 +127,12 @@ public class SmartOrganizer {
                     continue;
                 }
 
-                // Build the destination folder and create it if needed
                 Path categoryDir = targetDir.resolve(category);
                 if (!Files.exists(categoryDir)) {
                     Files.createDirectories(categoryDir);
                     System.out.println("  [NEW]   Created folder: " + category + "/");
                 }
 
-                // Move the file into the category folder
                 Path destination = categoryDir.resolve(fileName);
                 Files.move(entry, destination, StandardCopyOption.REPLACE_EXISTING);
 
@@ -183,7 +149,6 @@ public class SmartOrganizer {
             e.printStackTrace();
         }
 
-        // ── Summary ──
         System.out.println();
         System.out.println("──────────────────────────────────────────────");
         System.out.println("  Done!  Files moved: " + movedCount
@@ -191,10 +156,7 @@ public class SmartOrganizer {
         System.out.println("──────────────────────────────────────────────");
     }
 
-    // ──────────────────────────────────────────────
-    //  Utility: extract file extension (without dot)
-    // ──────────────────────────────────────────────
-    private static String extractExtension(String fileName) {
+    private static String ripTail(String fileName) {
         int dotIndex = fileName.lastIndexOf('.');
         if (dotIndex <= 0 || dotIndex == fileName.length() - 1) {
             return "";
