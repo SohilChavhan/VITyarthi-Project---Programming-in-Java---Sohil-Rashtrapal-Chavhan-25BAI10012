@@ -2,8 +2,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.text.*;
@@ -130,9 +134,15 @@ public class GuiOrganizer extends JFrame {
     private StyledDocument logDocument;
     private JButton    selectButton;
     private JButton    organizeButton;
+    private JButton    undoButton;
     private JLabel     statusLabel;
     private JProgressBar progressBar;
     private Path       selectedDirectory;
+
+    // Undo history: each entry is [originalPath, movedToPath]
+    private final List<Path[]> moveHistory = new ArrayList<>();
+    // Category folders created during the last organize
+    private final Set<Path> createdFolders = new LinkedHashSet<>();
 
     // ──────────────────────────────────────────────
     //  Constructor — build the UI
@@ -197,7 +207,7 @@ public class GuiOrganizer extends JFrame {
     }
 
     /**
-     * Folder selector row: [path field] [Select] [Organize]
+     * Folder selector row: [path field] [Select] [Organize] [Undo]
      */
     private JPanel createSelectorPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
@@ -223,10 +233,15 @@ public class GuiOrganizer extends JFrame {
         organizeButton.setEnabled(false);
         organizeButton.addActionListener(e -> onOrganize());
 
+        undoButton = createStyledButton("\u21A9  Undo", new Color(220, 120, 30), new Color(190, 100, 20));
+        undoButton.setEnabled(false);
+        undoButton.addActionListener(e -> onUndo());
+
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         btnPanel.setOpaque(false);
         btnPanel.add(selectButton);
         btnPanel.add(organizeButton);
+        btnPanel.add(undoButton);
 
         panel.add(pathField,  BorderLayout.CENTER);
         panel.add(btnPanel,   BorderLayout.EAST);
@@ -400,11 +415,14 @@ public class GuiOrganizer extends JFrame {
         // Disable buttons during operation
         selectButton.setEnabled(false);
         organizeButton.setEnabled(false);
+        undoButton.setEnabled(false);
         progressBar.setIndeterminate(true);
         progressBar.setVisible(true);
         statusLabel.setText("Organizing...");
 
-        // Clear previous logs
+        // Clear previous history and logs
+        moveHistory.clear();
+        createdFolders.clear();
         try {
             logDocument.remove(0, logDocument.getLength());
         } catch (BadLocationException ignored) { }
@@ -457,8 +475,10 @@ public class GuiOrganizer extends JFrame {
                                     "info"});
                         }
 
-                        // Move file
+                        // Move file and record for undo
                         Path destination = categoryDir.resolve(fileName);
+                        moveHistory.add(new Path[]{entry, destination});
+                        createdFolders.add(categoryDir);
                         Files.move(entry, destination,
                                 StandardCopyOption.REPLACE_EXISTING);
 
@@ -507,10 +527,125 @@ public class GuiOrganizer extends JFrame {
                 progressBar.setVisible(false);
                 selectButton.setEnabled(true);
                 organizeButton.setEnabled(true);
+                undoButton.setEnabled(!moveHistory.isEmpty());
             }
         };
 
         worker.execute();
+    }
+
+    // ──────────────────────────────────────────────
+    //  Action: Undo last organize
+    // ──────────────────────────────────────────────
+    private void onUndo() {
+        if (moveHistory.isEmpty()) return;
+
+        selectButton.setEnabled(false);
+        organizeButton.setEnabled(false);
+        undoButton.setEnabled(false);
+        progressBar.setIndeterminate(true);
+        progressBar.setVisible(true);
+        statusLabel.setText("Undoing...");
+
+        try {
+            logDocument.remove(0, logDocument.getLength());
+        } catch (BadLocationException ignored) { }
+
+        // Snapshot the history before the worker clears it
+        List<Path[]> historySnapshot = new ArrayList<>(moveHistory);
+        Set<Path> foldersSnapshot = new LinkedHashSet<>(createdFolders);
+
+        SwingWorker<Void, String[]> worker = new SwingWorker<>() {
+            private int restoredCount = 0;
+            private int errorCount    = 0;
+
+            @Override
+            protected Void doInBackground() {
+                publish(new String[]{"\u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510", "header"});
+                publish(new String[]{"\u2502   Undoing last organize operation", "header"});
+                publish(new String[]{"\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518", "header"});
+
+                // Move files back in reverse order
+                for (int i = historySnapshot.size() - 1; i >= 0; i--) {
+                    Path[] record = historySnapshot.get(i);
+                    Path originalPath = record[0];
+                    Path movedPath    = record[1];
+                    try {
+                        Files.move(movedPath, originalPath,
+                                StandardCopyOption.REPLACE_EXISTING);
+                        publish(new String[]{
+                                "  [RESTORED] " + movedPath.getFileName()
+                                        + "  \u2192  " + originalPath.getParent().getFileName() + "/",
+                                "success"});
+                        restoredCount++;
+                        Thread.sleep(40);
+                    } catch (IOException e) {
+                        publish(new String[]{
+                                "  [ERROR] Could not restore "
+                                        + movedPath.getFileName() + ": " + e.getMessage(),
+                                "error"});
+                        errorCount++;
+                    } catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+
+                // Remove empty category folders that we created
+                for (Path folder : foldersSnapshot) {
+                    try {
+                        if (Files.exists(folder) && isDirectoryEmpty(folder)) {
+                            Files.delete(folder);
+                            publish(new String[]{
+                                    "  [DEL]   Removed empty folder: "
+                                            + folder.getFileName() + "/", "info"});
+                        }
+                    } catch (IOException e) {
+                        publish(new String[]{
+                                "  [WARN]  Could not remove folder "
+                                        + folder.getFileName() + ": " + e.getMessage(),
+                                "warning"});
+                    }
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void process(java.util.List<String[]> chunks) {
+                for (String[] entry : chunks) {
+                    log(entry[0], entry[1]);
+                }
+            }
+
+            @Override
+            protected void done() {
+                log("", "default");
+                log("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
+                log("  Undo complete!  Restored: " + restoredCount
+                        + "  |  Errors: " + errorCount, "success");
+                log("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "header");
+
+                moveHistory.clear();
+                createdFolders.clear();
+                statusLabel.setText("Undo complete — " + restoredCount + " files restored");
+                progressBar.setIndeterminate(false);
+                progressBar.setVisible(false);
+                selectButton.setEnabled(true);
+                organizeButton.setEnabled(true);
+                undoButton.setEnabled(false);
+            }
+        };
+
+        worker.execute();
+    }
+
+    // ──────────────────────────────────────────────
+    //  Utility: check if a directory is empty
+    // ──────────────────────────────────────────────
+    private static boolean isDirectoryEmpty(Path dir) throws IOException {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            return !stream.iterator().hasNext();
+        }
     }
 
     // ──────────────────────────────────────────────
