@@ -1260,7 +1260,7 @@ public class GuiOrganizer extends JFrame {
 
         // ── Build dialog ──
         JDialog dialog = new JDialog(this, "Download & Sort", true);
-        dialog.setSize(600, 280);
+        dialog.setSize(600, 330);
         dialog.setLocationRelativeTo(this);
         dialog.setResizable(false);
 
@@ -1388,6 +1388,8 @@ public class GuiOrganizer extends JFrame {
             goBtn.setEnabled(false);
             urlField.setEditable(false);
             dlProgress.setVisible(true);
+            dialog.revalidate();
+            dialog.repaint();
             dlProgress.setIndeterminate(true);
             dlProgress.setString("Connecting...");
 
