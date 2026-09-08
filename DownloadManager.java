@@ -19,6 +19,7 @@ public class DownloadManager {
     private final String       urlString;
     private final Path         targetDirectory;
     private ProgressListener   listener;
+    private volatile boolean   cancelled = false;
 
     public DownloadManager(String urlString, Path targetDirectory) {
         this.urlString       = urlString;
@@ -27,6 +28,13 @@ public class DownloadManager {
 
     public void setProgressListener(ProgressListener listener) {
         this.listener = listener;
+    }
+
+    /**
+     * Signals the download loop to stop and clean up.
+     */
+    public void cancel() {
+        this.cancelled = true;
     }
 
     /**
@@ -83,22 +91,31 @@ public class DownloadManager {
             counter++;
         }
 
-        // Stream the download
-        try (InputStream in = new BufferedInputStream(conn.getInputStream(), 8192);
+        // Stream the download (optimized 128KB buffer for faster speeds)
+        try (InputStream in = new BufferedInputStream(conn.getInputStream(), 128 * 1024);
              OutputStream out = new BufferedOutputStream(
-                     Files.newOutputStream(outputPath), 8192)) {
+                     Files.newOutputStream(outputPath), 128 * 1024)) {
 
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[128 * 1024];
             long downloaded = 0;
             int bytesRead;
 
-            while ((bytesRead = in.read(buffer)) != -1) {
+            while (!cancelled && (bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
                 downloaded += bytesRead;
                 if (listener != null) {
                     listener.onProgress(downloaded, totalBytes);
                 }
             }
+
+            if (cancelled) {
+                throw new IOException("Download cancelled by user.");
+            }
+            
+        } catch (IOException e) {
+            // Clean up partial file on failure or cancellation
+            try { Files.deleteIfExists(outputPath); } catch (IOException ignored) {}
+            throw e;
         } finally {
             conn.disconnect();
         }

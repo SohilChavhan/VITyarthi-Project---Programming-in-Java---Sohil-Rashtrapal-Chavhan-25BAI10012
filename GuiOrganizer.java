@@ -1341,7 +1341,14 @@ public class GuiOrganizer extends JFrame {
         JButton goBtn = makeBtn("Download & Sort", COLOR_DOWNLOAD, COLOR_DOWNLOAD_HV);
         JButton cancelBtn = makeBtn("Cancel", COLOR_BG_INPUT, new Color(70, 75, 90));
 
-        cancelBtn.addActionListener(e -> dialog.dispose());
+        final DownloadManager[] dmRef = new DownloadManager[1];
+        final SwingWorker<?, ?>[] workerRef = new SwingWorker[1];
+
+        cancelBtn.addActionListener(e -> {
+            if (dmRef[0] != null) dmRef[0].cancel();
+            if (workerRef[0] != null) workerRef[0].cancel(true);
+            dialog.dispose();
+        });
 
         goBtn.addActionListener(e -> {
             String url = urlField.getText().trim();
@@ -1357,7 +1364,6 @@ public class GuiOrganizer extends JFrame {
             }
 
             goBtn.setEnabled(false);
-            cancelBtn.setEnabled(false);
             urlField.setEditable(false);
             dlProgress.setVisible(true);
             dlProgress.setIndeterminate(true);
@@ -1371,6 +1377,7 @@ public class GuiOrganizer extends JFrame {
                     try {
                         DownloadManager dm = new DownloadManager(
                                 finalUrl, selectedDirectory);
+                        dmRef[0] = dm;
 
                         dm.setProgressListener((downloaded, total) -> {
                             if (total > 0) {
@@ -1433,7 +1440,6 @@ public class GuiOrganizer extends JFrame {
                         statusLabel.setText("Download failed");
 
                         goBtn.setEnabled(true);
-                        cancelBtn.setEnabled(true);
                         urlField.setEditable(true);
                     }
                 }
@@ -1445,6 +1451,7 @@ public class GuiOrganizer extends JFrame {
             printLog("\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518", "header");
             statusLabel.setText("Downloading...");
 
+            workerRef[0] = worker;
             worker.execute();
         });
 
