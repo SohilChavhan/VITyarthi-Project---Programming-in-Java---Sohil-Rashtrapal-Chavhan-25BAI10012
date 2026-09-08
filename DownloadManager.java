@@ -21,6 +21,13 @@ public class DownloadManager {
     private boolean            multiThreaded = false;
     private static final int   THREADS = 4;
 
+    static {
+        // Automatically handle cookies to prevent redirect loops on servers requiring session validation
+        if (CookieHandler.getDefault() == null) {
+            CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
+        }
+    }
+
     public DownloadManager(String urlString, Path targetDirectory) {
         this.urlString       = urlString;
         this.targetDirectory = targetDirectory;
@@ -46,7 +53,7 @@ public class DownloadManager {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(15_000);
         conn.setReadTimeout(30_000);
-        conn.setRequestProperty("User-Agent", "SmartOrganizerDownloader/2.0");
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
         return conn;
     }
 
