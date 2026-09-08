@@ -1325,10 +1325,32 @@ public class GuiOrganizer extends JFrame {
         dlProgress.setAlignmentX(Component.LEFT_ALIGNMENT);
         dlProgress.setVisible(false);
 
+        JCheckBox optimizeBox = new JCheckBox("Optimize Download Speed (Experimental)");
+        optimizeBox.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        optimizeBox.setForeground(COLOR_TEXT_DIM);
+        optimizeBox.setBackground(COLOR_BG_DARK);
+        optimizeBox.setFocusPainted(false);
+        optimizeBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        optimizeBox.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                int result = JOptionPane.showConfirmDialog(dialog, 
+                    "Warning: Multi-threaded downloads can vastly increase speed, but might trigger IP bans or rate limiting on strict servers.\n\nAre you sure you want to enable this feature?",
+                    "Experimental Feature Warning",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                if (result != JOptionPane.YES_OPTION) {
+                    optimizeBox.setSelected(false);
+                }
+            }
+        });
+
         center.add(urlLabel);
         center.add(Box.createVerticalStrut(6));
         center.add(urlField);
         center.add(destLabel);
+        center.add(Box.createVerticalStrut(6));
+        center.add(optimizeBox);
         center.add(Box.createVerticalStrut(10));
         center.add(dlProgress);
         root.add(center, BorderLayout.CENTER);
@@ -1378,6 +1400,7 @@ public class GuiOrganizer extends JFrame {
                     try {
                         DownloadManager dm = new DownloadManager(
                                 finalUrl, selectedDirectory);
+                        dm.setMultiThreaded(optimizeBox.isSelected());
                         dmRef[0] = dm;
 
                         dm.setProgressListener((downloaded, total) -> {
