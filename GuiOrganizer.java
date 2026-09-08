@@ -1374,18 +1374,25 @@ public class GuiOrganizer extends JFrame {
             SwingWorker<Path, int[]> worker = new SwingWorker<>() {
                 @Override
                 protected Path doInBackground() {
+                    long startTime = System.currentTimeMillis();
                     try {
                         DownloadManager dm = new DownloadManager(
                                 finalUrl, selectedDirectory);
                         dmRef[0] = dm;
 
                         dm.setProgressListener((downloaded, total) -> {
+                            long elapsedMs = System.currentTimeMillis() - startTime;
+                            int kbps = 0;
+                            if (elapsedMs > 0) {
+                                kbps = (int) ((downloaded * 1000L) / (elapsedMs * 1024L));
+                            }
+
                             if (total > 0) {
                                 int pct = (int) ((downloaded * 100) / total);
                                 publish(new int[]{pct, (int)(downloaded/1024),
-                                        (int)(total/1024)});
+                                        (int)(total/1024), kbps});
                             } else {
-                                publish(new int[]{-1, (int)(downloaded/1024), -1});
+                                publish(new int[]{-1, (int)(downloaded/1024), -1, kbps});
                             }
                         });
 
@@ -1398,14 +1405,23 @@ public class GuiOrganizer extends JFrame {
                 @Override
                 protected void process(java.util.List<int[]> chunks) {
                     int[] latest = chunks.get(chunks.size() - 1);
-                    if (latest[0] >= 0) {
+                    int pct = latest[0];
+                    int downloadedKB = latest[1];
+                    int totalKB = latest[2];
+                    int kbps = latest.length > 3 ? latest[3] : 0;
+
+                    String speedStr = kbps > 1024 
+                            ? String.format("%.1f MB/s", kbps / 1024.0) 
+                            : kbps + " KB/s";
+
+                    if (pct >= 0) {
                         dlProgress.setIndeterminate(false);
-                        dlProgress.setValue(latest[0]);
-                        dlProgress.setString(latest[0] + "%  ("
-                                + latest[1] + " KB / " + latest[2] + " KB)");
+                        dlProgress.setValue(pct);
+                        dlProgress.setString(pct + "%  ("
+                                + downloadedKB + " KB / " + totalKB + " KB)  @ " + speedStr);
                     } else {
                         dlProgress.setIndeterminate(true);
-                        dlProgress.setString("Downloading... " + latest[1] + " KB");
+                        dlProgress.setString("Downloading... " + downloadedKB + " KB  @ " + speedStr);
                     }
                 }
 
