@@ -1332,8 +1332,8 @@ public class GuiOrganizer extends JFrame {
         optimizeBox.setFocusPainted(false);
         optimizeBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        optimizeBox.addItemListener(e -> {
-            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+        optimizeBox.addActionListener(e -> {
+            if (optimizeBox.isSelected()) {
                 int result = JOptionPane.showConfirmDialog(dialog, 
                     "Warning: Multi-threaded downloads can vastly increase speed, but might trigger IP bans or rate limiting on strict servers.\n\nAre you sure you want to enable this feature?",
                     "Experimental Feature Warning",
@@ -1387,6 +1387,7 @@ public class GuiOrganizer extends JFrame {
 
             goBtn.setEnabled(false);
             urlField.setEditable(false);
+            optimizeBox.setEnabled(false);
             dlProgress.setVisible(true);
             dialog.revalidate();
             dialog.repaint();
@@ -1482,6 +1483,7 @@ public class GuiOrganizer extends JFrame {
 
                         goBtn.setEnabled(true);
                         urlField.setEditable(true);
+                        optimizeBox.setEnabled(true);
                     }
                 }
             };
