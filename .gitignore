@@ -3,3 +3,9 @@
 *.db
 MessyFolder/
 .vscode/
+
+# Ignore GUI files
+GuiOrganizer.java
+ContentScanner.java
+DownloadManager.java
+HistoryManager.java
